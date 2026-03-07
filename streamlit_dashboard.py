@@ -34,6 +34,7 @@ col2.code(metrics["report"])
 
 st.subheader("Top High-Risk Countries")
 st.dataframe(latest_risk.head(10), width="stretch")
+st.dataframe(latest_risk.head(10), use_container_width=True)
 
 country_risk = latest_risk[["country", "risk_score"]]
 student_risk = students_df.merge(country_risk, on="country", how="left")
@@ -55,6 +56,11 @@ st.dataframe(summary.sort_values(["risk_level", "student_count"], ascending=[Tru
 
 st.subheader("Students in high-risk regions")
 st.dataframe(student_risk[student_risk["risk_level"] == "High"].head(30), width="stretch")
+summary = student_risk.groupby(["country", "risk_level"], as_index=False).agg(student_count=("student_id", "count"))
+st.dataframe(summary.sort_values(["risk_level", "student_count"], ascending=[True, False]), use_container_width=True)
+
+st.subheader("Students in high-risk regions")
+st.dataframe(student_risk[student_risk["risk_level"] == "High"].head(30), use_container_width=True)
 
 st.subheader("Conflict trend timeline")
 country_pick = st.selectbox("Select country", latest_risk["country"].tolist())
@@ -76,3 +82,4 @@ embassy_contacts = pd.DataFrame(
     }
 )
 st.dataframe(embassy_contacts.head(10), width="stretch")
+st.dataframe(embassy_contacts.head(10), use_container_width=True)

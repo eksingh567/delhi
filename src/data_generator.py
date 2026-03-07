@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 import random
 
 import numpy as np
@@ -30,6 +31,7 @@ class _FallbackIdentityGenerator:
 
     def phone_number(self) -> str:
         return f"+1-202-555-{self._rng.randint(1000, 9999)}"
+from faker import Faker
 
 
 @dataclass(frozen=True)
@@ -110,6 +112,9 @@ def generate_student_data(size: int = 500, seed: int = 42) -> pd.DataFrame:
     except ModuleNotFoundError:
         fake = _FallbackIdentityGenerator(fallback_rng)
 
+    fake = Faker()
+    Faker.seed(seed)
+    random.seed(seed)
     rows = []
     universities = {
         "Ukraine": ["Kharkiv National University", "Taras Shevchenko National University"],

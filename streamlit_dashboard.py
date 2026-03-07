@@ -33,6 +33,7 @@ col2.write("Classification report")
 col2.code(metrics["report"])
 
 st.subheader("Top High-Risk Countries")
+st.dataframe(latest_risk.head(10), width="stretch")
 st.dataframe(latest_risk.head(10), use_container_width=True)
 
 country_risk = latest_risk[["country", "risk_score"]]
@@ -45,6 +46,16 @@ student_risk["risk_level"] = pd.cut(
 )
 
 st.subheader("Student distribution by risk level")
+summary = (
+    student_risk.assign(risk_level=student_risk["risk_level"].astype(str))
+    .groupby(["country", "risk_level"], observed=False)["student_id"]
+    .count()
+    .reset_index(name="student_count")
+)
+st.dataframe(summary.sort_values(["risk_level", "student_count"], ascending=[True, False]), width="stretch")
+
+st.subheader("Students in high-risk regions")
+st.dataframe(student_risk[student_risk["risk_level"] == "High"].head(30), width="stretch")
 summary = student_risk.groupby(["country", "risk_level"], as_index=False).agg(student_count=("student_id", "count"))
 st.dataframe(summary.sort_values(["risk_level", "student_count"], ascending=[True, False]), use_container_width=True)
 
@@ -70,4 +81,5 @@ embassy_contacts = pd.DataFrame(
         "evacuation_priority": latest_risk["escalation_probability"],
     }
 )
+st.dataframe(embassy_contacts.head(10), width="stretch")
 st.dataframe(embassy_contacts.head(10), use_container_width=True)

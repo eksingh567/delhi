@@ -6,6 +6,31 @@ import random
 
 import numpy as np
 import pandas as pd
+
+
+class _FallbackIdentityGenerator:
+    """Minimal fallback when Faker is unavailable in the runtime."""
+
+    def __init__(self, rng: random.Random) -> None:
+        self._rng = rng
+        self._cities = [
+            "Kyiv",
+            "Warsaw",
+            "Moscow",
+            "Jerusalem",
+            "Delhi",
+            "Taipei",
+            "Seoul",
+            "Boston",
+            "Lviv",
+            "Krakow",
+        ]
+
+    def city(self) -> str:
+        return self._rng.choice(self._cities)
+
+    def phone_number(self) -> str:
+        return f"+1-202-555-{self._rng.randint(1000, 9999)}"
 from faker import Faker
 
 
@@ -77,6 +102,16 @@ def generate_social_signals(news_df: pd.DataFrame, seed: int = 42) -> pd.DataFra
 
 
 def generate_student_data(size: int = 500, seed: int = 42) -> pd.DataFrame:
+    random.seed(seed)
+    fallback_rng = random.Random(seed)
+    try:
+        from faker import Faker
+
+        fake = Faker()
+        Faker.seed(seed)
+    except ModuleNotFoundError:
+        fake = _FallbackIdentityGenerator(fallback_rng)
+
     fake = Faker()
     Faker.seed(seed)
     random.seed(seed)

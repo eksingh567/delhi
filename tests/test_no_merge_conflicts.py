@@ -4,7 +4,11 @@ import subprocess
 from pathlib import Path
 
 
-CONFLICT_MARKERS = ("<<<<<<<", "=======", ">>>>>>>")
+CONFLICT_MARKERS = (
+    "<" * 7,
+    "=" * 7,
+    ">" * 7,
+)
 
 
 def test_repository_has_no_merge_conflict_markers() -> None:

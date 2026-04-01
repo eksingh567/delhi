@@ -1,80 +1,88 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
-class RiskLevel(str, Enum):
-    low = "LOW"
-    medium = "MEDIUM"
-    high = "HIGH"
+class ClaimCondition(str, Enum):
+    clear = "Clear"
+    heavy_rain = "Heavy Rain"
+    blizzard = "Blizzard"
 
 
-@dataclass
-class GeopoliticalSignals:
-    country: str
-    news_severity: float
-    military_activity: float
-    diplomatic_tension: float
-    economic_sanctions: float
-    social_sentiment: float
-    historical_pattern: float
+class ClaimStatus(str, Enum):
+    approved = "APPROVED"
+    denied = "DENIED"
+    review = "REVIEW"
 
 
-@dataclass
-class RiskAssessment:
-    country: str
-    probability_of_escalation: float
-    risk_level: RiskLevel
-    expected_timeframe_weeks: str
+class DriverProfile(BaseModel):
+    driver_id: str
+    display_name: str
+    home_base: str
+
+
+class ClaimSubmission(BaseModel):
+    driver_id: str = Field(min_length=3)
+    location_query: str = Field(min_length=3, description="Human-readable address/city")
+    claim_start_utc: datetime
+    claim_end_utc: datetime
+    claimed_condition: ClaimCondition
+
+
+class OracleSnapshot(BaseModel):
+    latitude: float
+    longitude: float
+    precipitation_mm: float
+    wind_speed_kmh: float
+    snowfall_cm: float
+    observed_condition: ClaimCondition
+
+
+class ClaimDecision(BaseModel):
+    claim_id: str
+    driver_id: str
+    status: ClaimStatus
+    approved_hours: float
+    payout_usd: float
+    reason: str
+    strikes_after_decision: int
+    restricted: bool
+    oracle: OracleSnapshot
+    processed_at: datetime
+
+
+class DriverForensicState(BaseModel):
+    driver_id: str
+    display_name: str
+    strikes: int
+    approved_claims: int
+    denied_claims: int
+    restricted: bool
+    forensic_history_score: float
+
+
+class DashboardSnapshot(BaseModel):
     generated_at: datetime
+    total_claims: int
+    approval_rate: float
+    local_volatility: float
+    traffic_density: float
+    forensic_history_risk: float
+    real_time_risk_score: float
+    risk_trend: list[float]
+    payout_exposure_usd: float
 
 
-@dataclass
-class StudentRegistration:
-    student_id: str
-    full_name: str
-    email: str
-    phone: str
-    university: str
-    country: str
-    city: str
-    passport_last4: str
-    emergency_contact: str
-    location_sharing_enabled: bool = False
+class PolicyRule(BaseModel):
+    title: str
+    detail: str
 
 
-@dataclass
-class StudentStatus:
-    student_id: str
-    safety_status: str
-    latest_update: datetime
-
-
-@dataclass
-class Alert:
-    country: str
-    risk_level: RiskLevel
-    message: str
-    recommended_exit_routes: List[str]
+class PolicyDocument(BaseModel):
     generated_at: datetime
-
-
-@dataclass
-class EvacuationRequest:
-    country: str
-    origin_city: str
-    target_safe_hub: str
-    student_count: int
-    avoid_nodes: Optional[List[str]] = field(default=None)
-
-
-@dataclass
-class EvacuationPlan:
-    route: List[str]
-    estimated_travel_time_hours: float
-    risk_score: str
-    transport_capacity: int
-    embassy_contact_point: str
+    payout_rules: dict[str, float]
+    strike_policy: list[PolicyRule]
+    consensus_description: list[PolicyRule]

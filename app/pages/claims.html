@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GigShield Claims</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">GIGSHIELD // CLAIMS CONSOLE</div>
+    <nav class="nav">
+      <a href="/">Index</a>
+      <a href="/dashboard">Dashboard</a>
+      <a class="active" href="/claims">Claims</a>
+      <a href="/policy">Policy</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="grid" style="grid-template-columns: 1.1fr 1fr; align-items:start;">
+      <div class="card">
+        <h3 style="font-family: Syne, sans-serif;">Submit parametric claim</h3>
+        <form id="claim-form">
+          <label>Driver ID</label>
+          <input name="driver_id" value="DRV-100" required />
+          <label>Location</label>
+          <input name="location_query" value="Chicago, IL" required />
+          <label>Claim Start (UTC)</label>
+          <input type="datetime-local" name="claim_start_utc" required />
+          <label>Claim End (UTC)</label>
+          <input type="datetime-local" name="claim_end_utc" required />
+          <label>Claimed Condition</label>
+          <select name="claimed_condition">
+            <option>Heavy Rain</option>
+            <option>Blizzard</option>
+            <option>Clear</option>
+          </select>
+          <button type="submit">Run Consensus Check</button>
+        </form>
+        <p id="claim-output"></p>
+      </div>
+      <div id="metric-cards" class="grid"></div>
+    </div>
+    <div class="card" style="margin-top:1rem;">
+      <h3 style="font-family: Syne, sans-serif;">Forensic Claim Ledger</h3>
+      <table>
+        <thead><tr><th>Claim</th><th>Driver</th><th>Status</th><th>Observed</th><th>Payout</th><th>Strikes</th></tr></thead>
+        <tbody id="claim-rows"></tbody>
+      </table>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

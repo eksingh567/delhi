@@ -1,60 +1,77 @@
-import unittest
+from __future__ import annotations
 
-from app.models import EvacuationRequest, GeopoliticalSignals, StudentRegistration
-from app.services import SafePassEngine
+from datetime import datetime, timezone
+
+from app.models import ClaimCondition, ClaimSubmission, OracleSnapshot
+from app.services import GigShieldConsensusEngine
 
 
-class SafePassEngineTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.engine = SafePassEngine()
+def test_consensus_approves_when_observed_matches(monkeypatch) -> None:
+    engine = GigShieldConsensusEngine()
 
-    def test_assess_risk_high(self) -> None:
-        signals = GeopoliticalSignals(
-            country="Ukraine",
-            news_severity=90,
-            military_activity=95,
-            diplomatic_tension=88,
-            economic_sanctions=70,
-            social_sentiment=65,
-            historical_pattern=80,
+    def fake_snapshot(*args, **kwargs):
+        return OracleSnapshot(
+            latitude=41.0,
+            longitude=-87.0,
+            precipitation_mm=8.0,
+            wind_speed_kmh=35.0,
+            snowfall_cm=0.0,
+            observed_condition=ClaimCondition.heavy_rain,
         )
 
-        risk = self.engine.assess_risk(signals)
-        self.assertEqual(risk.risk_level.value, "HIGH")
-        self.assertGreaterEqual(risk.probability_of_escalation, 70)
+    monkeypatch.setattr(engine, "_build_oracle_snapshot", fake_snapshot)
 
-    def test_register_and_filter_students(self) -> None:
-        student = StudentRegistration(
-            student_id="STU-001",
-            full_name="Aditi Sharma",
-            email="aditi@example.com",
-            phone="+380991234567",
-            university="Kharkiv National University",
-            country="Ukraine",
-            city="Kharkiv",
-            passport_last4="1234",
-            emergency_contact="Rahul Sharma",
-            location_sharing_enabled=True,
+    decision = engine.process_claim(
+        ClaimSubmission(
+            driver_id="DRV-100",
+            location_query="Chicago, IL",
+            claim_start_utc=datetime(2026, 1, 10, 10, tzinfo=timezone.utc),
+            claim_end_utc=datetime(2026, 1, 10, 13, tzinfo=timezone.utc),
+            claimed_condition=ClaimCondition.heavy_rain,
+        )
+    )
+
+    assert decision.status.value == "APPROVED"
+    assert decision.payout_usd == 15.0
+
+
+def test_three_strikes_restricts_account(monkeypatch) -> None:
+    engine = GigShieldConsensusEngine()
+
+    def fake_snapshot(*args, **kwargs):
+        return OracleSnapshot(
+            latitude=42.0,
+            longitude=-71.0,
+            precipitation_mm=0.0,
+            wind_speed_kmh=8.0,
+            snowfall_cm=0.0,
+            observed_condition=ClaimCondition.clear,
         )
 
-        self.engine.register_student(student)
-        filtered = self.engine.list_students("Ukraine")
-        self.assertEqual(len(filtered), 1)
-        self.assertEqual(filtered[0].student_id, "STU-001")
+    monkeypatch.setattr(engine, "_build_oracle_snapshot", fake_snapshot)
 
-    def test_evacuation_plan(self) -> None:
-        req = EvacuationRequest(
-            country="Ukraine",
-            origin_city="Kharkiv",
-            target_safe_hub="Poland Border",
-            student_count=120,
+    for _ in range(3):
+        decision = engine.process_claim(
+            ClaimSubmission(
+                driver_id="DRV-220",
+                location_query="Boston, MA",
+                claim_start_utc=datetime(2026, 1, 12, 8, tzinfo=timezone.utc),
+                claim_end_utc=datetime(2026, 1, 12, 10, tzinfo=timezone.utc),
+                claimed_condition=ClaimCondition.blizzard,
+            )
         )
 
-        plan = self.engine.plan_evacuation(req)
-        self.assertEqual(plan.route[0], "Kharkiv")
-        self.assertEqual(plan.route[-1], "Poland Border")
-        self.assertEqual(plan.transport_capacity, 120)
+    assert decision.restricted is True
+    assert decision.strikes_after_decision == 3
 
-
-if __name__ == "__main__":
-    unittest.main()
+    denied_after_restriction = engine.process_claim(
+        ClaimSubmission(
+            driver_id="DRV-220",
+            location_query="Boston, MA",
+            claim_start_utc=datetime(2026, 1, 13, 8, tzinfo=timezone.utc),
+            claim_end_utc=datetime(2026, 1, 13, 10, tzinfo=timezone.utc),
+            claimed_condition=ClaimCondition.heavy_rain,
+        )
+    )
+    assert denied_after_restriction.status.value == "DENIED"
+    assert denied_after_restriction.payout_usd == 0.0

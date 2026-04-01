@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GigShield Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">GIGSHIELD // FORENSIC DASHBOARD</div>
+    <nav class="nav">
+      <a href="/">Index</a>
+      <a class="active" href="/dashboard">Dashboard</a>
+      <a href="/claims">Claims</a>
+      <a href="/policy">Policy</a>
+    </nav>
+  </header>
+  <main class="container">
+    <div id="metric-cards" class="grid"></div>
+    <div class="card" style="margin-top:1rem;">
+      <h3 style="font-family: Syne, sans-serif;">Risk Telemetry</h3>
+      <canvas id="riskChart" height="90"></canvas>
+    </div>
+    <div class="card" style="margin-top:1rem;">
+      <h3 style="font-family: Syne, sans-serif;">Driver Forensic Registry</h3>
+      <table>
+        <thead><tr><th>Driver</th><th>Name</th><th>Strikes</th><th>History Risk</th><th>Status</th></tr></thead>
+        <tbody id="driver-rows"></tbody>
+      </table>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
